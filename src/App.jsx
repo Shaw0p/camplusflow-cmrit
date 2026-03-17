@@ -8,7 +8,13 @@ import RecentReminders from './components/RecentReminders';
 const TASK_TYPES = ['Assignment', 'Exam', 'Lab', 'Project', 'Lecture'];
 const STYLE_OPTS = ['Motivational', 'Strict', 'Friendly', 'Funny'];
 const LS_KEY = 'campusflow_reminders';
-const API_BASE = (import.meta.env.VITE_API_BASE || 'https://camplusflow-cmrit-1.onrender.com').replace(/\/$/, '');
+const RENDER_API = 'https://camplusflow-cmrit-1.onrender.com';
+const RAW_API_BASE = import.meta.env.VITE_API_BASE || RENDER_API;
+// Safety: never ship a production build that points to localhost.
+const API_BASE = ((import.meta.env.PROD && /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?$/i.test(RAW_API_BASE))
+    ? RENDER_API
+    : RAW_API_BASE
+).replace(/\/$/, '');
 const TODAY = new Date().toISOString().split('T')[0];
 
 const INITIAL_FORM = {
