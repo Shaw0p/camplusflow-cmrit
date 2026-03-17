@@ -50,6 +50,24 @@ npm run dev
 # → http://localhost:5173
 ```
 
+#### Frontend API base (Render vs local)
+
+By default, the frontend uses the deployed backend:
+
+- `https://camplusflow-cmrit-1.onrender.com`
+
+To override (e.g. when running the backend locally), create a local `.env` (not committed) using `.env.example`:
+
+```bash
+copy .env.example .env
+```
+
+Then set:
+
+```env
+VITE_API_BASE=http://localhost:5000
+```
+
 ### 2. Install & start the backend
 
 ```bash
