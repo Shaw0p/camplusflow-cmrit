@@ -42,31 +42,42 @@
 //    - Response: { success: true, message: "Scheduled", aiMessage }
 // ────────────────────────────────────────────────────────────────────────────────
 
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import path from 'path';
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
 
 dotenv.config();
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ── Middleware ──────────────────────────────────────────────────────────────────
-app.use(cors({
-    origin: [
-        'http://localhost:5173',
-        'http://localhost:5174',
-        'http://localhost:5175',
-        'http://localhost:4173',
-        'http://localhost:3000',
-        process.env.FRONTEND_URL,
-    ].filter(Boolean),
+const corsOptions = {
+    origin: function (origin, callback) {
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://localhost:5173',
+            'https://camplusflow-cmrit.vercel.app',
+            'https://campus-flow-gj5u2irk6-shaw0ps-projects.vercel.app'
+        ];
+        // Allow requests with no origin (mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.some(allowed =>
+            origin.includes('vercel.app') ||
+            origin.includes('localhost') ||
+            origin === allowed
+        )) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+    credentials: true
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true }));

@@ -2,7 +2,6 @@
   "name": "campusflow-server",
   "version": "1.0.0",
   "description": "CampusFlow backend — Express + n8n webhook",
-  "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
