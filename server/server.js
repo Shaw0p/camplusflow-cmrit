@@ -114,7 +114,7 @@ app.get('/', (req, res) => {
 
 // ── Schedule reminder ────────────────────────────────────────────────────────────
 app.post('/api/schedule', async (req, res) => {
-    const { name, task, taskType, date, time, phone, style } = req.body;
+    const { name, task, taskType, date, time, phone, email, style } = req.body;
 
     // Validate required fields
     const missing = [];
@@ -124,6 +124,7 @@ app.post('/api/schedule', async (req, res) => {
     if (!date?.trim()) missing.push('date');
     if (!time?.trim()) missing.push('time');
     if (!phone?.trim()) missing.push('phone');
+    if (!email?.trim()) missing.push('email');
     if (!style?.trim()) missing.push('style');
 
     if (missing.length) {
@@ -142,6 +143,15 @@ app.post('/api/schedule', async (req, res) => {
         });
     }
 
+    // Validate email format
+    const emailValue = String(email).trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid email. Use a valid email address like your@gmail.com',
+        });
+    }
+
     // Validate date is not in the past
     const taskDate = new Date(`${date}T${time}`);
     if (isNaN(taskDate.getTime())) {
@@ -155,6 +165,7 @@ app.post('/api/schedule', async (req, res) => {
         date: date.trim(),
         time: time.trim(),
         phone: phone.trim(),
+        email: emailValue,
         style: style.trim(),
         scheduledFor: taskDate.toISOString(),
     };

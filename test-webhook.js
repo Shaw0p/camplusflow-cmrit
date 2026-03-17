@@ -6,6 +6,7 @@ const payload = {
     date: "2026-03-20",
     time: "14:00",
     phone: "+919631886999",
+    email: "arjun@gmail.com",
     style: "Motivational",
 };
 

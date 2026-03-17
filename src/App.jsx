@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 import { LoadingState, SuccessState } from './components/States';
 import RecentReminders from './components/RecentReminders';
@@ -12,7 +13,7 @@ const TODAY = new Date().toISOString().split('T')[0];
 
 const INITIAL_FORM = {
     name: '', task: '', taskType: 'Assignment',
-    date: '', time: '', phone: '', style: 'Motivational',
+    date: '', time: '', phone: '', email: '', style: 'Motivational',
 };
 
 function loadReminders() {
@@ -36,7 +37,7 @@ const FEATURES = [
 
 // ══════════════════════════════════════════════════════════════════
 export default function App() {
-    const [form, setForm] = useState(INITIAL_FORM);
+    const [formData, setFormData] = useState(INITIAL_FORM);
     const [status, setStatus] = useState('idle');
     const [lastData, setLastData] = useState(null);
     const [reminders, setReminders] = useState(loadReminders);
@@ -46,13 +47,16 @@ export default function App() {
 
     function validate() {
         const e = {};
-        if (!form.name.trim()) e.name = 'Student name is required';
-        if (!form.task.trim()) e.task = 'Task name is required';
-        if (!form.date) e.date = 'Date is required';
-        if (!form.time) e.time = 'Time is required';
-        if (!form.phone.trim()) e.phone = 'WhatsApp number is required';
-        else if (!/^\+\d{7,15}$/.test(form.phone.trim()))
+        if (!formData.name.trim()) e.name = 'Student name is required';
+        if (!formData.task.trim()) e.task = 'Task name is required';
+        if (!formData.date) e.date = 'Date is required';
+        if (!formData.time) e.time = 'Time is required';
+        if (!formData.phone.trim()) e.phone = 'WhatsApp number is required';
+        else if (!/^\+\d{7,15}$/.test(formData.phone.trim()))
             e.phone = 'Use format +91XXXXXXXXXX (with country code)';
+        if (!formData.email?.trim()) e.email = 'Email is required';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim()))
+            e.email = 'Enter a valid email address (e.g. your@gmail.com)';
         return e;
     }
 
@@ -68,35 +72,39 @@ export default function App() {
         setStatus('loading');
 
         try {
-            const res = await fetch(`${API_BASE}/api/schedule`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(form),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || 'Server error');
-            const updated = saveReminder(form);
+            const { data } = await axios.post(
+                `${API_BASE}/api/schedule`,
+                { ...formData }, // include email in POST body
+                { headers: { 'Content-Type': 'application/json' } }
+            );
+            if (!data?.success) throw new Error(data?.message || 'Server error');
+            const updated = saveReminder(formData);
             setReminders(updated);
-            setLastData({ ...form });
+            setLastData({ ...formData });
             setStatus('success');
             toast.success('Reminder scheduled successfully! 🎉');
         } catch (err) {
             console.error(err);
-            toast.error(err.message || 'Failed to schedule. Check your backend.');
+            const msg =
+                err?.response?.data?.message ||
+                err?.message ||
+                'Failed to schedule. Check your backend.';
+            toast.error(msg);
             setStatus('idle');
         }
     }
 
     function handleReset() {
-        setForm(INITIAL_FORM);
+        setFormData(INITIAL_FORM);
         setLastData(null);
         setStatus('idle');
         setErrors({});
     }
 
-    function handleChange(field, value) {
-        setForm(prev => ({ ...prev, [field]: value }));
-        if (errors[field]) setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
+    function handleChange(e) {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) setErrors(prev => { const n = { ...prev }; delete n[name]; return n; });
     }
 
     return (
@@ -192,24 +200,27 @@ export default function App() {
                                         {/* Student Name */}
                                         <FormField label="Student Name" error={errors.name} icon="👤">
                                             <input id="studentName" type="text" className="cf-input"
+                                                name="name"
                                                 placeholder="e.g. Arjun Sharma"
-                                                value={form.name}
-                                                onChange={e => handleChange('name', e.target.value)} />
+                                                value={formData.name}
+                                                onChange={handleChange} />
                                         </FormField>
 
                                         {/* Subject / Task */}
                                         <FormField label="Subject / Task Name" error={errors.task} icon="📖">
                                             <input id="taskName" type="text" className="cf-input"
+                                                name="task"
                                                 placeholder="e.g. Data Structures Assignment"
-                                                value={form.task}
-                                                onChange={e => handleChange('task', e.target.value)} />
+                                                value={formData.task}
+                                                onChange={handleChange} />
                                         </FormField>
 
                                         {/* Task Type */}
                                         <FormField label="Task Type" icon="🏷️">
                                             <select id="taskType" className="cf-input"
-                                                value={form.taskType}
-                                                onChange={e => handleChange('taskType', e.target.value)}>
+                                                name="taskType"
+                                                value={formData.taskType}
+                                                onChange={handleChange}>
                                                 {TASK_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
                                         </FormField>
@@ -217,8 +228,9 @@ export default function App() {
                                         {/* AI Style */}
                                         <FormField label="AI Reminder Style" icon="🎨">
                                             <select id="reminderStyle" className="cf-input"
-                                                value={form.style}
-                                                onChange={e => handleChange('style', e.target.value)}>
+                                                name="style"
+                                                value={formData.style}
+                                                onChange={handleChange}>
                                                 {STYLE_OPTS.map(s => (
                                                     <option key={s} value={s}>
                                                         {s === 'Motivational' ? '💪 Motivational' :
@@ -232,25 +244,39 @@ export default function App() {
                                         {/* Date */}
                                         <FormField label="Date" error={errors.date} icon="📅">
                                             <input id="taskDate" type="date" className="cf-input"
+                                                name="date"
                                                 min={TODAY}
-                                                value={form.date}
-                                                onChange={e => handleChange('date', e.target.value)} />
+                                                value={formData.date}
+                                                onChange={handleChange} />
                                         </FormField>
 
                                         {/* Time */}
                                         <FormField label="Time" error={errors.time} icon="⏰">
                                             <input id="taskTime" type="time" className="cf-input"
-                                                value={form.time}
-                                                onChange={e => handleChange('time', e.target.value)} />
+                                                name="time"
+                                                value={formData.time}
+                                                onChange={handleChange} />
                                         </FormField>
 
                                         {/* WhatsApp — full width */}
                                         <div className="sm:col-span-2">
                                             <FormField label="WhatsApp Number" error={errors.phone} icon="📱">
                                                 <input id="whatsappNumber" type="tel" className="cf-input"
+                                                    name="phone"
                                                     placeholder="+91XXXXXXXXXX"
-                                                    value={form.phone}
-                                                    onChange={e => handleChange('phone', e.target.value)} />
+                                                    value={formData.phone}
+                                                    onChange={handleChange} />
+                                            </FormField>
+                                        </div>
+
+                                        {/* Email — full width */}
+                                        <div className="sm:col-span-2">
+                                            <FormField label="Email" error={errors.email} icon="✉️">
+                                                <input id="studentEmail" type="email" className="cf-input"
+                                                    name="email"
+                                                    placeholder="your@gmail.com"
+                                                    value={formData.email}
+                                                    onChange={handleChange} />
                                             </FormField>
                                         </div>
 

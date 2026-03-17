@@ -91,6 +91,7 @@ export function SuccessState({ data, onReset }) {
                         { icon: '📅', label: 'Date', value: data.date },
                         { icon: '⏰', label: 'Time', value: data.time },
                         { icon: '📱', label: 'WhatsApp', value: data.phone },
+                        { icon: '✉️', label: 'Email', value: data.email },
                         { icon: '🎨', label: 'Style', value: data.style },
                     ].map(item => (
                         <div key={item.label} className="rounded-xl p-3"
@@ -112,6 +113,7 @@ export function SuccessState({ data, onReset }) {
                     { icon: '📝', label: 'Form' },
                     { icon: '🤖', label: 'Groq AI' },
                     { icon: '📱', label: 'WhatsApp' },
+                    { icon: '✉️', label: 'Email' },
                     { icon: '📆', label: 'Calendar' },
                 ].map((step, i, arr) => (
                     <React.Fragment key={step.label}>
