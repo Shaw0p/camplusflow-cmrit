@@ -89,6 +89,18 @@ app.get('/api/health', (_req, res) => {
     });
 });
 
+// ── Root (friendly) ─────────────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+    res.json({
+        success: true,
+        message: 'CampusFlow backend is running',
+        docs: {
+            health: `${req.protocol}://${req.get('host')}/api/health`,
+            schedule: `${req.protocol}://${req.get('host')}/api/schedule`,
+        },
+    });
+});
+
 // ── Schedule reminder ────────────────────────────────────────────────────────────
 app.post('/api/schedule', async (req, res) => {
     const { name, task, taskType, date, time, phone, style } = req.body;
